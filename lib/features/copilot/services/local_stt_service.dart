@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'dart:io';
 
 class LocalSttService {
-  static const List<String> _candidateDirs = [
-    r'models\stt',
-    r'..\models\stt',
-    r'C:\Users\LOQ\.gemini\antigravity\scratch\tempo\models\stt',
-  ];
+  static List<String> get _candidateDirs {
+    final exeDir = File(Platform.resolvedExecutable).parent.path;
+    return [
+      '$exeDir\\models\\stt',
+      r'models\stt',
+      r'..\models\stt',
+      r'C:\Users\LOQ\.gemini\antigravity\scratch\tempo\models\stt',
+    ];
+  }
 
   static File? getModelFile() {
     for (final dirPath in _candidateDirs) {
