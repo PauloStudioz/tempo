@@ -82,11 +82,16 @@ class _ColumnManagerSheetState extends ConsumerState<ColumnManagerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GlassContainer(
       borderRadius: 20,
       padding: const EdgeInsets.all(18),
-      backgroundColor: TempoTheme.surfaceElevated.withValues(alpha: 0.96),
-      borderColor: TempoTheme.glassBorder,
+      blur: 16,
+      backgroundColor: isDark
+          ? TempoTheme.surfaceElevated.withValues(alpha: 0.96)
+          : Colors.white.withValues(alpha: 0.98),
+      borderColor: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,53 +100,96 @@ class _ColumnManagerSheetState extends ConsumerState<ColumnManagerSheet> {
             children: [
               Text(
                 widget.initialColumn == null ? 'New Column' : 'Edit Column',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: TempoTheme.textPrimary, letterSpacing: -0.2),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                  letterSpacing: -0.2,
+                ),
               ),
               const Spacer(),
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(CupertinoIcons.xmark, size: 16),
-                color: TempoTheme.textMuted,
+                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
               ),
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(color: TempoTheme.dividerDark, height: 1),
+          Divider(color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider, height: 1),
           const SizedBox(height: 14),
 
           // Title
-          const Text('Column Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary)),
+          Text(
+            'Column Name',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+            ),
+          ),
           const SizedBox(height: 5),
           TextField(
             controller: _titleController,
-            style: const TextStyle(fontSize: 13.5, color: TempoTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'e.g., In Review, Blocked',
-              hintStyle: const TextStyle(color: TempoTheme.textMuted, fontSize: 12.5),
+              hintStyle: TextStyle(
+                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                fontSize: 12.5,
+              ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.04),
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder, width: 0.6),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder, width: 0.6),
+              ),
             ),
           ),
           const SizedBox(height: 14),
 
           // WIP Limit
-          const Text('Work In Progress (WIP) Limit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary)),
+          Text(
+            'Work In Progress (WIP) Limit',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+            ),
+          ),
           const SizedBox(height: 5),
           TextField(
             controller: _wipLimitController,
             keyboardType: TextInputType.number,
-            style: const TextStyle(fontSize: 13.5, color: TempoTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'Optional limit (e.g., 3). Leave blank for unlimited.',
-              hintStyle: const TextStyle(color: TempoTheme.textMuted, fontSize: 12),
+              hintStyle: TextStyle(
+                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                fontSize: 12,
+              ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.04),
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder, width: 0.6),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder, width: 0.6),
+              ),
             ),
           ),
           const SizedBox(height: 18),
@@ -152,7 +200,13 @@ class _ColumnManagerSheetState extends ConsumerState<ColumnManagerSheet> {
             children: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel', style: TextStyle(color: TempoTheme.textSecondary, fontSize: 13)),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               ElevatedButton(

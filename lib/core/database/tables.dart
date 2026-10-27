@@ -22,6 +22,7 @@ class Tasks extends Table {
   DateTimeColumn get toDoDate => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime()();
   IntColumn get orderIndex => integer()();
+  BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};

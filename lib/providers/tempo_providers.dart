@@ -166,6 +166,18 @@ class ThemePresetNotifier extends Notifier<String> {
 
 final themePresetProvider = NotifierProvider<ThemePresetNotifier, String>(ThemePresetNotifier.new);
 
+// Animations / Reduced Motion Provider
+class AnimationsEnabledNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void toggle(bool enabled) {
+    state = enabled;
+  }
+}
+
+final animationsEnabledProvider = NotifierProvider<AnimationsEnabledNotifier, bool>(AnimationsEnabledNotifier.new);
+
 // Resizable Column Widths Provider
 class ColumnWidthsNotifier extends Notifier<Map<String, double>> {
   static const double defaultWidth = 320.0;

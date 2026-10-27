@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -119,66 +120,106 @@ class _ColumnWidgetState extends ConsumerState<ColumnWidget> {
                             final task = tasks[index];
                             final showIndicatorAbove = _hoveredDropIndex == index;
 
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Subtle insertion indicator when hovering above this task
-                                if (showIndicatorAbove)
-                                  Container(
-                                    height: 3,
-                                    margin: const EdgeInsets.symmetric(vertical: 3, horizontal: 10),
-                                    decoration: BoxDecoration(
-                                      color: accentColor.withValues(alpha: 0.85),
-                                      borderRadius: BorderRadius.circular(2),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: accentColor.withValues(alpha: 0.3),
-                                          blurRadius: 6,
-                                        ),
-                                      ],
+                            return RepaintBoundary(
+                              key: ValueKey(task.id),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Fluid animated insertion slot when hovering above this task
+                                  AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    curve: Curves.easeOutCubic,
+                                    height: showIndicatorAbove ? 32 : 0,
+                                    margin: EdgeInsets.symmetric(
+                                      vertical: showIndicatorAbove ? 5 : 0,
+                                      horizontal: 4,
                                     ),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withValues(alpha: isDark ? 0.15 : 0.10),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: accentColor.withValues(alpha: 0.65),
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    child: showIndicatorAbove
+                                        ? Center(
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(CupertinoIcons.arrow_down_circle_fill, size: 13, color: accentColor),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  'Insert Here',
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: accentColor,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : null,
                                   ),
 
-                                // Card with DragTarget detection for precision ordering
-                                DragTarget<TaskItem>(
-                                  onWillAcceptWithDetails: (details) {
-                                    setState(() => _hoveredDropIndex = index);
-                                    return true;
-                                  },
-                                  onLeave: (_) {
-                                    if (_hoveredDropIndex == index) {
+                                  // Card with DragTarget detection for precision ordering
+                                  DragTarget<TaskItem>(
+                                    onWillAcceptWithDetails: (details) {
+                                      setState(() => _hoveredDropIndex = index);
+                                      return true;
+                                    },
+                                    onLeave: (_) {
+                                      if (_hoveredDropIndex == index) {
+                                        setState(() => _hoveredDropIndex = null);
+                                      }
+                                    },
+                                    onAcceptWithDetails: (details) {
                                       setState(() => _hoveredDropIndex = null);
-                                    }
-                                  },
-                                  onAcceptWithDetails: (details) {
-                                    setState(() => _hoveredDropIndex = null);
-                                    HapticFeedback.lightImpact();
-                                    widget.onTaskReordered(details.data, column, index);
-                                  },
-                                  builder: (context, candidateData, rejectedData) {
-                                    return Draggable<TaskItem>(
-                                      data: task,
-                                      dragAnchorStrategy: childDragAnchorStrategy,
-                                      feedback: Material(
-                                        color: Colors.transparent,
-                                        child: SizedBox(
-                                          width: currentWidth - 28,
+                                      HapticFeedback.lightImpact();
+                                      widget.onTaskReordered(details.data, column, index);
+                                    },
+                                    builder: (context, candidateData, rejectedData) {
+                                      return Draggable<TaskItem>(
+                                        data: task,
+                                        dragAnchorStrategy: childDragAnchorStrategy,
+                                        feedback: Material(
+                                          color: Colors.transparent,
+                                          child: Transform.scale(
+                                            scale: 1.03,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
+                                                    blurRadius: 24,
+                                                    spreadRadius: 2,
+                                                    offset: const Offset(0, 10),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: SizedBox(
+                                                width: currentWidth - 28,
+                                                child: TaskCard(task: task),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        childWhenDragging: Opacity(
+                                          opacity: 0.15,
                                           child: TaskCard(task: task),
                                         ),
-                                      ),
-                                      childWhenDragging: Opacity(
-                                        opacity: 0.20,
-                                        child: TaskCard(task: task),
-                                      ),
-                                      child: TaskCard(
-                                        task: task,
-                                        onTap: () => widget.onTaskTap(task),
-                                        onDelete: () => widget.onTaskDelete(task),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
+                                        child: TaskCard(
+                                          task: task,
+                                          onTap: () => widget.onTaskTap(task),
+                                          onDelete: () => widget.onTaskDelete(task),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ],
+                              ),
                             );
                           },
                           childCount: tasks.length,
@@ -210,32 +251,50 @@ class _ColumnWidgetState extends ConsumerState<ColumnWidget> {
                               constraints: const BoxConstraints(minHeight: 80),
                               alignment: Alignment.topCenter,
                               padding: const EdgeInsets.only(top: 8),
-                              child: isHovered
-                                  ? Container(
-                                      height: 3,
-                                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                                      decoration: BoxDecoration(
-                                        color: accentColor.withValues(alpha: 0.8),
-                                        borderRadius: BorderRadius.circular(2),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: accentColor.withValues(alpha: 0.25),
-                                            blurRadius: 6,
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  : (tasks.isEmpty
-                                      ? Center(
-                                          child: Text(
-                                            candidateData.isNotEmpty ? 'Drop here' : 'No tasks',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                curve: Curves.easeOutCubic,
+                                width: double.infinity,
+                                height: isHovered ? 40 : (tasks.isEmpty ? 80 : 30),
+                                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                                decoration: isHovered
+                                    ? BoxDecoration(
+                                        color: accentColor.withValues(alpha: isDark ? 0.15 : 0.10),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: accentColor.withValues(alpha: 0.65),
+                                          width: 1.2,
+                                        ),
+                                      )
+                                    : null,
+                                child: Center(
+                                  child: isHovered
+                                      ? Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(CupertinoIcons.arrow_down_circle_fill, size: 13, color: accentColor),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              'Move to Bottom',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                color: accentColor,
+                                              ),
                                             ),
-                                          ),
+                                          ],
                                         )
-                                      : const SizedBox.expand()),
+                                      : (tasks.isEmpty
+                                          ? Text(
+                                              candidateData.isNotEmpty ? 'Drop here' : 'No tasks',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                              ),
+                                            )
+                                          : const SizedBox.shrink()),
+                                ),
+                              ),
                             );
                           },
                         ),

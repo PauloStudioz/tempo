@@ -23,7 +23,7 @@ class GlassContainer extends StatefulWidget {
     this.borderRadius = 18,
     this.padding,
     this.margin,
-    this.blur = 20,
+    this.blur = 0, // High-performance default: prevents multi-layer offscreen texture cache explosions
     this.backgroundColor,
     this.borderColor,
     this.borderWidth = 0.8,
@@ -74,24 +74,41 @@ class _GlassContainerState extends State<GlassContainer> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            padding: widget.padding ?? const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: effectiveBg,
-              borderRadius: BorderRadius.circular(widget.borderRadius),
-              border: Border.all(
-                color: effectiveBorder,
-                width: widget.borderWidth,
-              ),
-            ),
-            child: widget.child,
-          ),
+      child: RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          child: widget.blur > 0
+              ? BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: widget.blur, sigmaY: widget.blur),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    padding: widget.padding ?? const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: effectiveBg,
+                      borderRadius: BorderRadius.circular(widget.borderRadius),
+                      border: Border.all(
+                        color: effectiveBorder,
+                        width: widget.borderWidth,
+                      ),
+                    ),
+                    child: widget.child,
+                  ),
+                )
+              : AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  padding: widget.padding ?? const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: effectiveBg,
+                    borderRadius: BorderRadius.circular(widget.borderRadius),
+                    border: Border.all(
+                      color: effectiveBorder,
+                      width: widget.borderWidth,
+                    ),
+                  ),
+                  child: widget.child,
+                ),
         ),
       ),
     );

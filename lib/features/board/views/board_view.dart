@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/tempo_theme.dart';
+import '../../../models/task_models.dart';
 import '../../../providers/tempo_providers.dart';
 import '../widgets/column_widget.dart';
 import '../widgets/task_edit_dialog.dart';
@@ -44,194 +45,65 @@ class _BoardViewState extends ConsumerState<BoardView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Streamlined Apple HIG Top Bar (Segmented Control + Filter Popover + Search)
+            // Streamlined Responsive Apple HIG Top Bar (Zero Mobile Overflow)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              child: Row(
-                children: [
-                  Text(
-                    'Board',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
-                      letterSpacing: -0.4,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isMobile = constraints.maxWidth < 620;
 
-                  // macOS Style Segmented Control (All / Active / Completed)
-                  Container(
-                    padding: const EdgeInsets.all(2.5),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.06)
-                          : Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                  if (isMobile) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSegmentButton('All', TaskStatusFilter.all, isDark),
-                        _buildSegmentButton('Active', TaskStatusFilter.active, isDark),
-                        _buildSegmentButton('Completed', TaskStatusFilter.completed, isDark),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  // Contextual Filter Popover / Dropdown
-                  PopupMenuButton<String?>(
-                    tooltip: 'Filter by attribute',
-                    onSelected: (val) {
-                      HapticFeedback.selectionClick();
-                      setState(() => _selectedBadgeFilter = val);
-                    },
-                    color: isDark ? TempoTheme.surfaceElevated : TempoTheme.lightSurfaceElevated,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    itemBuilder: (context) {
-                      return [
-                        const PopupMenuItem<String?>(
-                          value: null,
-                          child: Text('All Attributes', style: TextStyle(fontSize: 12.5)),
-                        ),
-                        const PopupMenuDivider(height: 1),
-                        ...badges.map((b) => PopupMenuItem<String?>(
-                              value: b.id,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: b.color,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      b.label,
-                                      style: TextStyle(
-                                        fontSize: 12.5,
-                                        fontWeight: _selectedBadgeFilter == b.id
-                                            ? FontWeight.w600
-                                            : FontWeight.w400,
-                                      ),
-                                    ),
-                                  ),
-                                  if (_selectedBadgeFilter == b.id)
-                                    const Icon(CupertinoIcons.checkmark, size: 13, color: TempoTheme.systemBlueDark),
-                                ],
-                              ),
-                            )),
-                      ];
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: _selectedBadgeFilter != null
-                            ? (isDark
-                                ? TempoTheme.systemBlueDark.withValues(alpha: 0.15)
-                                : TempoTheme.systemBlue.withValues(alpha: 0.12))
-                            : (isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.black.withValues(alpha: 0.04)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            CupertinoIcons.line_horizontal_3_decrease,
-                            size: 13,
-                            color: _selectedBadgeFilter != null
-                                ? TempoTheme.systemBlueDark
-                                : (isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary),
-                          ),
-                          if (activeBadge != null) ...[
-                            const SizedBox(width: 5),
+                        Row(
+                          children: [
                             Text(
-                              activeBadge.label,
-                              style: const TextStyle(
-                                fontSize: 11,
+                              'Board',
+                              style: TextStyle(
+                                fontSize: 20,
                                 fontWeight: FontWeight.w600,
-                                color: TempoTheme.systemBlueDark,
+                                color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                                letterSpacing: -0.4,
                               ),
                             ),
-                            const SizedBox(width: 4),
-                            GestureDetector(
-                              onTap: () => setState(() => _selectedBadgeFilter = null),
-                              child: const Icon(CupertinoIcons.xmark, size: 10, color: TempoTheme.systemBlueDark),
-                            ),
+                            const Spacer(),
+                            _buildFilterButton(isDark, activeBadge, badges),
+                            const SizedBox(width: 8),
+                            _buildSearchBox(width: 130, isDark: isDark),
                           ],
-                        ],
-                      ),
-                    ),
-                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: Center(
+                            child: _buildSegmentControl(isDark),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
 
-                  const Spacer(),
-
-                  // Clean Minimalist Search Input
-                  SizedBox(
-                    width: 190,
-                    height: 30,
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Search tasks...',
-                        hintStyle: TextStyle(
-                          color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
-                          fontSize: 11.5,
-                        ),
-                        prefixIcon: Icon(
-                          CupertinoIcons.search,
-                          size: 13,
-                          color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
-                        ),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 26),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? GestureDetector(
-                                onTap: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                                child: Icon(
-                                  CupertinoIcons.clear_circled_solid,
-                                  size: 13,
-                                  color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
-                                ),
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.04),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: TempoTheme.systemBlueDark, width: 0.9),
+                  return Row(
+                    children: [
+                      Text(
+                        'Board',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                          letterSpacing: -0.4,
                         ),
                       ),
-                    ),
-                  ),
-                ],
+                      const SizedBox(width: 16),
+                      _buildSegmentControl(isDark),
+                      const SizedBox(width: 8),
+                      _buildFilterButton(isDark, activeBadge, badges),
+                      const Spacer(),
+                      _buildSearchBox(width: 190, isDark: isDark),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(height: 6),
@@ -254,8 +126,8 @@ class _BoardViewState extends ConsumerState<BoardView> {
 
                     final matchesStatus = switch (_statusFilter) {
                       TaskStatusFilter.all => true,
-                      TaskStatusFilter.active => !task.isAllCompleted,
-                      TaskStatusFilter.completed => task.isAllCompleted,
+                      TaskStatusFilter.active => !task.isTaskCompleted,
+                      TaskStatusFilter.completed => task.isTaskCompleted,
                     };
 
                     return matchesSearch && matchesBadge && matchesStatus;
@@ -271,6 +143,7 @@ class _BoardViewState extends ConsumerState<BoardView> {
                       final colTasks = filteredTasks.where((t) => t.columnId == col.id).toList();
 
                       return ColumnWidget(
+                        key: ValueKey(col.id),
                         column: col,
                         tasks: colTasks,
                         onTaskTap: (task) {
@@ -301,6 +174,163 @@ class _BoardViewState extends ConsumerState<BoardView> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSegmentControl(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSegmentButton('All', TaskStatusFilter.all, isDark),
+          _buildSegmentButton('Active', TaskStatusFilter.active, isDark),
+          _buildSegmentButton('Completed', TaskStatusFilter.completed, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterButton(bool isDark, CustomBadge? activeBadge, List<CustomBadge> badges) {
+    return PopupMenuButton<String?>(
+      tooltip: 'Filter by attribute',
+      onSelected: (val) {
+        HapticFeedback.selectionClick();
+        setState(() => _selectedBadgeFilter = val);
+      },
+      color: isDark ? TempoTheme.surfaceElevated : TempoTheme.lightSurfaceElevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      itemBuilder: (context) {
+        return [
+          const PopupMenuItem<String?>(
+            value: null,
+            child: Text('All Attributes', style: TextStyle(fontSize: 12.5)),
+          ),
+          const PopupMenuDivider(height: 1),
+          ...badges.map((b) => PopupMenuItem<String?>(
+                value: b.id,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: b.color,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        b.label,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: _selectedBadgeFilter == b.id ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    if (_selectedBadgeFilter == b.id)
+                      const Icon(CupertinoIcons.checkmark, size: 13, color: TempoTheme.systemBlueDark),
+                  ],
+                ),
+              )),
+        ];
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: _selectedBadgeFilter != null
+              ? (isDark
+                  ? TempoTheme.systemBlueDark.withValues(alpha: 0.15)
+                  : TempoTheme.systemBlue.withValues(alpha: 0.12))
+              : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              CupertinoIcons.line_horizontal_3_decrease,
+              size: 13,
+              color: _selectedBadgeFilter != null
+                  ? TempoTheme.systemBlueDark
+                  : (isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary),
+            ),
+            if (activeBadge != null) ...[
+              const SizedBox(width: 5),
+              Text(
+                activeBadge.label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: TempoTheme.systemBlueDark,
+                ),
+              ),
+              const SizedBox(width: 4),
+              GestureDetector(
+                onTap: () => setState(() => _selectedBadgeFilter = null),
+                child: const Icon(CupertinoIcons.xmark, size: 10, color: TempoTheme.systemBlueDark),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBox({required double? width, required bool isDark}) {
+    return SizedBox(
+      width: width,
+      height: 30,
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) => setState(() => _searchQuery = val.trim().toLowerCase()),
+        style: TextStyle(
+          fontSize: 12,
+          color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+        ),
+        decoration: InputDecoration(
+          hintText: 'Search tasks...',
+          hintStyle: TextStyle(
+            color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+            fontSize: 11.5,
+          ),
+          prefixIcon: Icon(
+            CupertinoIcons.search,
+            size: 13,
+            color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+          ),
+          prefixIconConstraints: const BoxConstraints(minWidth: 26),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? GestureDetector(
+                  onTap: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                  child: Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 13,
+                    color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                  ),
+                )
+              : null,
+          filled: true,
+          fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: const BorderSide(color: TempoTheme.systemBlueDark, width: 0.9),
+          ),
         ),
       ),
     );

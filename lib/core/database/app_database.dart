@@ -11,7 +11,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? e]) : super(e ?? openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -21,7 +21,14 @@ class AppDatabase extends _$AppDatabase {
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
-            await m.addColumn(tasks, tasks.toDoDate);
+            try {
+              await m.addColumn(tasks, tasks.toDoDate);
+            } catch (_) {}
+          }
+          if (from < 3) {
+            try {
+              await m.addColumn(tasks, tasks.isCompleted);
+            } catch (_) {}
           }
         },
         beforeOpen: (details) async {
@@ -211,6 +218,7 @@ class AppDatabase extends _$AppDatabase {
           toDoDate: t.toDoDate,
           createdAt: t.createdAt,
           order: t.orderIndex,
+          isCompleted: t.isCompleted,
         );
       }).toList();
     });
@@ -232,6 +240,7 @@ class AppDatabase extends _$AppDatabase {
           toDoDate: Value(task.toDoDate),
           createdAt: task.createdAt,
           orderIndex: task.order,
+          isCompleted: Value(task.isCompleted),
         ),
         mode: InsertMode.insertOrReplace,
       );
@@ -277,6 +286,7 @@ class AppDatabase extends _$AppDatabase {
           dueDate: Value(task.dueDate),
           toDoDate: Value(task.toDoDate),
           orderIndex: Value(task.order),
+          isCompleted: Value(task.isCompleted),
         ),
       );
 
@@ -374,6 +384,46 @@ class AppDatabase extends _$AppDatabase {
       await (update(timeBlocks)..where((t) => t.subtaskId.equals(subtaskId))).write(
         TimeBlocksCompanion(isCompleted: Value(isCompleted)),
       );
+
+      // 3. Parent Task Progress & Completion Sync
+      final sub = await (select(subtasks)..where((t) => t.id.equals(subtaskId))).getSingleOrNull();
+      if (sub != null) {
+        final allSubs = await (select(subtasks)..where((t) => t.taskId.equals(sub.taskId))).get();
+        final allDone = allSubs.isNotEmpty && allSubs.every((s) => s.isCompleted);
+        await (update(tasks)..where((t) => t.id.equals(sub.taskId))).write(
+          TasksCompanion(isCompleted: Value(allDone)),
+        );
+      }
+    });
+  }
+
+  /// Toggle task completion directly (for normal tasks with or without subtasks).
+  Future<void> toggleTaskCompleted(String taskId, bool isCompleted) async {
+    await transaction(() async {
+      // 1. Update task itself
+      await (update(tasks)..where((t) => t.id.equals(taskId))).write(
+        TasksCompanion(isCompleted: Value(isCompleted)),
+      );
+
+      // 2. Set all subtasks of this task to match
+      await (update(subtasks)..where((t) => t.taskId.equals(taskId))).write(
+        SubtasksCompanion(isCompleted: Value(isCompleted)),
+      );
+
+      // 3. Update any linked timeblocks
+      await (update(timeBlocks)..where((t) => t.taskId.equals(taskId))).write(
+        TimeBlocksCompanion(isCompleted: Value(isCompleted)),
+      );
+    });
+  }
+
+  /// Clears all user tasks and time blocks for a fresh production-ready state.
+  Future<void> clearAllUserTasksAndTimeBlocks() async {
+    await transaction(() async {
+      await delete(timeBlocks).go();
+      await delete(subtasks).go();
+      await delete(taskBadges).go();
+      await delete(tasks).go();
     });
   }
 

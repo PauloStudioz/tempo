@@ -169,7 +169,7 @@ class UnscheduledDrawer extends ConsumerWidget {
                                 colorHex: effortBadge.colorHex,
                                 durationMinutes: 45,
                               ),
-                              dragAnchorStrategy: childDragAnchorStrategy,
+                              dragAnchorStrategy: (draggable, context, position) => const Offset(80, 20),
                               feedback: Material(
                                 color: Colors.transparent,
                                 child: Container(
@@ -237,7 +237,7 @@ class UnscheduledDrawer extends ConsumerWidget {
                                   colorHex: effortBadge.colorHex,
                                   durationMinutes: durationMin,
                                 ),
-                                dragAnchorStrategy: childDragAnchorStrategy,
+                                dragAnchorStrategy: (draggable, context, position) => const Offset(80, 20),
                                 feedback: Material(
                                   color: Colors.transparent,
                                   child: Container(

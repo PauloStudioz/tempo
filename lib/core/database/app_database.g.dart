@@ -457,6 +457,21 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _isCompletedMeta = const VerificationMeta(
+    'isCompleted',
+  );
+  @override
+  late final GeneratedColumn<bool> isCompleted = GeneratedColumn<bool>(
+    'is_completed',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_completed" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -467,6 +482,7 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     toDoDate,
     createdAt,
     orderIndex,
+    isCompleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -540,6 +556,15 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
     } else if (isInserting) {
       context.missing(_orderIndexMeta);
     }
+    if (data.containsKey('is_completed')) {
+      context.handle(
+        _isCompletedMeta,
+        isCompleted.isAcceptableOrUnknown(
+          data['is_completed']!,
+          _isCompletedMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -581,6 +606,10 @@ class $TasksTable extends Tasks with TableInfo<$TasksTable, TaskEntry> {
         DriftSqlType.int,
         data['${effectivePrefix}order_index'],
       )!,
+      isCompleted: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_completed'],
+      )!,
     );
   }
 
@@ -599,6 +628,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
   final DateTime? toDoDate;
   final DateTime createdAt;
   final int orderIndex;
+  final bool isCompleted;
   const TaskEntry({
     required this.id,
     required this.title,
@@ -608,6 +638,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     this.toDoDate,
     required this.createdAt,
     required this.orderIndex,
+    required this.isCompleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -624,6 +655,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['order_index'] = Variable<int>(orderIndex);
+    map['is_completed'] = Variable<bool>(isCompleted);
     return map;
   }
 
@@ -641,6 +673,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           : Value(toDoDate),
       createdAt: Value(createdAt),
       orderIndex: Value(orderIndex),
+      isCompleted: Value(isCompleted),
     );
   }
 
@@ -658,6 +691,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       toDoDate: serializer.fromJson<DateTime?>(json['toDoDate']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       orderIndex: serializer.fromJson<int>(json['orderIndex']),
+      isCompleted: serializer.fromJson<bool>(json['isCompleted']),
     );
   }
   @override
@@ -672,6 +706,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       'toDoDate': serializer.toJson<DateTime?>(toDoDate),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'orderIndex': serializer.toJson<int>(orderIndex),
+      'isCompleted': serializer.toJson<bool>(isCompleted),
     };
   }
 
@@ -684,6 +719,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     Value<DateTime?> toDoDate = const Value.absent(),
     DateTime? createdAt,
     int? orderIndex,
+    bool? isCompleted,
   }) => TaskEntry(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -693,6 +729,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     toDoDate: toDoDate.present ? toDoDate.value : this.toDoDate,
     createdAt: createdAt ?? this.createdAt,
     orderIndex: orderIndex ?? this.orderIndex,
+    isCompleted: isCompleted ?? this.isCompleted,
   );
   TaskEntry copyWithCompanion(TasksCompanion data) {
     return TaskEntry(
@@ -708,6 +745,9 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
       orderIndex: data.orderIndex.present
           ? data.orderIndex.value
           : this.orderIndex,
+      isCompleted: data.isCompleted.present
+          ? data.isCompleted.value
+          : this.isCompleted,
     );
   }
 
@@ -721,7 +761,8 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           ..write('dueDate: $dueDate, ')
           ..write('toDoDate: $toDoDate, ')
           ..write('createdAt: $createdAt, ')
-          ..write('orderIndex: $orderIndex')
+          ..write('orderIndex: $orderIndex, ')
+          ..write('isCompleted: $isCompleted')
           ..write(')'))
         .toString();
   }
@@ -736,6 +777,7 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
     toDoDate,
     createdAt,
     orderIndex,
+    isCompleted,
   );
   @override
   bool operator ==(Object other) =>
@@ -748,7 +790,8 @@ class TaskEntry extends DataClass implements Insertable<TaskEntry> {
           other.dueDate == this.dueDate &&
           other.toDoDate == this.toDoDate &&
           other.createdAt == this.createdAt &&
-          other.orderIndex == this.orderIndex);
+          other.orderIndex == this.orderIndex &&
+          other.isCompleted == this.isCompleted);
 }
 
 class TasksCompanion extends UpdateCompanion<TaskEntry> {
@@ -760,6 +803,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
   final Value<DateTime?> toDoDate;
   final Value<DateTime> createdAt;
   final Value<int> orderIndex;
+  final Value<bool> isCompleted;
   final Value<int> rowid;
   const TasksCompanion({
     this.id = const Value.absent(),
@@ -770,6 +814,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.toDoDate = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.orderIndex = const Value.absent(),
+    this.isCompleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   TasksCompanion.insert({
@@ -781,6 +826,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     this.toDoDate = const Value.absent(),
     required DateTime createdAt,
     required int orderIndex,
+    this.isCompleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        title = Value(title),
@@ -797,6 +843,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Expression<DateTime>? toDoDate,
     Expression<DateTime>? createdAt,
     Expression<int>? orderIndex,
+    Expression<bool>? isCompleted,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -808,6 +855,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       if (toDoDate != null) 'to_do_date': toDoDate,
       if (createdAt != null) 'created_at': createdAt,
       if (orderIndex != null) 'order_index': orderIndex,
+      if (isCompleted != null) 'is_completed': isCompleted,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -821,6 +869,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     Value<DateTime?>? toDoDate,
     Value<DateTime>? createdAt,
     Value<int>? orderIndex,
+    Value<bool>? isCompleted,
     Value<int>? rowid,
   }) {
     return TasksCompanion(
@@ -832,6 +881,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
       toDoDate: toDoDate ?? this.toDoDate,
       createdAt: createdAt ?? this.createdAt,
       orderIndex: orderIndex ?? this.orderIndex,
+      isCompleted: isCompleted ?? this.isCompleted,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -863,6 +913,9 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
     if (orderIndex.present) {
       map['order_index'] = Variable<int>(orderIndex.value);
     }
+    if (isCompleted.present) {
+      map['is_completed'] = Variable<bool>(isCompleted.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -880,6 +933,7 @@ class TasksCompanion extends UpdateCompanion<TaskEntry> {
           ..write('toDoDate: $toDoDate, ')
           ..write('createdAt: $createdAt, ')
           ..write('orderIndex: $orderIndex, ')
+          ..write('isCompleted: $isCompleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2778,6 +2832,7 @@ typedef $$TasksTableCreateCompanionBuilder = TasksCompanion Function({
   Value<DateTime?> toDoDate,
   required DateTime createdAt,
   required int orderIndex,
+  Value<bool> isCompleted,
   Value<int> rowid,
 });
 typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
@@ -2789,6 +2844,7 @@ typedef $$TasksTableUpdateCompanionBuilder = TasksCompanion Function({
   Value<DateTime?> toDoDate,
   Value<DateTime> createdAt,
   Value<int> orderIndex,
+  Value<bool> isCompleted,
   Value<int> rowid,
 });
 
@@ -2908,6 +2964,11 @@ class $$TasksTableFilterComposer extends Composer<_$AppDatabase, $TasksTable> {
 
   ColumnFilters<int> get orderIndex => $composableBuilder(
     column: $table.orderIndex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3054,6 +3115,11 @@ class $$TasksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$BoardColumnsTableOrderingComposer get columnId {
     final $$BoardColumnsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3109,6 +3175,11 @@ class $$TasksTableAnnotationComposer
 
   GeneratedColumn<int> get orderIndex => $composableBuilder(
     column: $table.orderIndex,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isCompleted => $composableBuilder(
+    column: $table.isCompleted,
     builder: (column) => column,
   );
 
@@ -3252,6 +3323,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> toDoDate = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> orderIndex = const Value.absent(),
+                Value<bool> isCompleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion(
                 id: id,
@@ -3262,6 +3334,7 @@ class $$TasksTableTableManager
                 toDoDate: toDoDate,
                 createdAt: createdAt,
                 orderIndex: orderIndex,
+                isCompleted: isCompleted,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3274,6 +3347,7 @@ class $$TasksTableTableManager
                 Value<DateTime?> toDoDate = const Value.absent(),
                 required DateTime createdAt,
                 required int orderIndex,
+                Value<bool> isCompleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => TasksCompanion.insert(
                 id: id,
@@ -3284,6 +3358,7 @@ class $$TasksTableTableManager
                 toDoDate: toDoDate,
                 createdAt: createdAt,
                 orderIndex: orderIndex,
+                isCompleted: isCompleted,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

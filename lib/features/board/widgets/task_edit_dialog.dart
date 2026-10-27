@@ -206,6 +206,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final columnsAsync = ref.watch(columnsStreamProvider);
     final badgesAsync = ref.watch(badgesStreamProvider);
 
@@ -233,7 +234,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.45),
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
             blurRadius: 36,
             spreadRadius: 2,
             offset: const Offset(0, 16),
@@ -243,13 +244,15 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xCC161820), // Frosted glass obsidian tint (~80% opacity)
+              color: isDark ? const Color(0xCC161820) : const Color(0xF2FFFFFF),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.14),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.14)
+                    : Colors.black.withValues(alpha: 0.08),
                 width: 0.8,
               ),
             ),
@@ -263,10 +266,10 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                   children: [
                     Text(
                       widget.initialTask == null ? 'New Task' : 'Edit Task',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: TempoTheme.textPrimary,
+                        color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -278,17 +281,26 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                         child: Container(
                           padding: const EdgeInsets.all(5),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Colors.black.withValues(alpha: 0.04),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(CupertinoIcons.xmark, size: 14, color: TempoTheme.textMuted),
+                          child: Icon(
+                            CupertinoIcons.xmark,
+                            size: 14,
+                            color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Divider(color: TempoTheme.dividerDark, height: 1),
+                Divider(
+                  color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider,
+                  height: 1,
+                ),
                 const SizedBox(height: 12),
 
                 // Form Body (Flexible — never wastes vertical empty space)
@@ -300,34 +312,45 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Title Input
-                        const Text(
+                        Text(
                           'Title',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
-                            color: TempoTheme.textSecondary,
+                            color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                           ),
                         ),
                         const SizedBox(height: 5),
                         TextField(
                           controller: _titleController,
-                          style: const TextStyle(
-                            color: TempoTheme.textPrimary,
+                          style: TextStyle(
+                            color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
                             fontSize: 13.5,
                           ),
                           decoration: InputDecoration(
                             hintText: 'Task description...',
-                            hintStyle: const TextStyle(color: TempoTheme.textMuted, fontSize: 13),
+                            hintStyle: TextStyle(
+                              color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                              fontSize: 13,
+                            ),
                             filled: true,
-                            fillColor: Colors.white.withValues(alpha: 0.04),
+                            fillColor: isDark
+                                ? Colors.white.withValues(alpha: 0.04)
+                                : Colors.black.withValues(alpha: 0.03),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.7),
+                              borderSide: BorderSide(
+                                color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                                width: 0.7,
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.7),
+                              borderSide: BorderSide(
+                                color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                                width: 0.7,
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -346,12 +369,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Scope Code',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w500,
-                                      color: TempoTheme.textSecondary,
+                                      color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 5),
@@ -365,7 +388,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                     ),
                                     decoration: InputDecoration(
                                       hintText: 'ENG',
-                                      hintStyle: const TextStyle(color: TempoTheme.textMuted),
+                                      hintStyle: TextStyle(
+                                        color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                      ),
                                       filled: true,
                                       fillColor: TempoTheme.pastelSky.withValues(alpha: 0.07),
                                       contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
@@ -394,12 +419,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'To-Do Date',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w500,
-                                      color: TempoTheme.textSecondary,
+                                      color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 5),
@@ -412,7 +437,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                         lastDate: DateTime.now().add(const Duration(days: 365)),
                                         builder: (context, child) {
                                           return Theme(
-                                            data: TempoTheme.darkTheme,
+                                            data: isDark ? TempoTheme.darkTheme : TempoTheme.lightTheme,
                                             child: child!,
                                           );
                                         },
@@ -427,12 +452,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                       decoration: BoxDecoration(
                                         color: _toDoDate != null
                                             ? TempoTheme.pastelSky.withValues(alpha: 0.12)
-                                            : Colors.white.withValues(alpha: 0.04),
+                                            : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: _toDoDate != null
                                               ? TempoTheme.pastelSky.withValues(alpha: 0.45)
-                                              : TempoTheme.glassBorder,
+                                              : (isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder),
                                           width: 0.8,
                                         ),
                                       ),
@@ -441,7 +466,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                           Icon(
                                             CupertinoIcons.calendar,
                                             size: 13,
-                                            color: _toDoDate != null ? TempoTheme.pastelSky : TempoTheme.textMuted,
+                                            color: _toDoDate != null
+                                                ? TempoTheme.pastelSky
+                                                : (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted),
                                           ),
                                           const SizedBox(width: 5),
                                           Expanded(
@@ -450,7 +477,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                               style: TextStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: _toDoDate != null ? FontWeight.w600 : FontWeight.w400,
-                                                color: _toDoDate != null ? TempoTheme.pastelSky : TempoTheme.textMuted,
+                                                color: _toDoDate != null
+                                                    ? TempoTheme.pastelSky
+                                                    : (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted),
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -458,7 +487,11 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                           if (_toDoDate != null)
                                             GestureDetector(
                                               onTap: () => setState(() => _toDoDate = null),
-                                              child: const Icon(CupertinoIcons.xmark_circle_fill, size: 13, color: TempoTheme.textMuted),
+                                              child: Icon(
+                                                CupertinoIcons.xmark_circle_fill,
+                                                size: 13,
+                                                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                              ),
                                             ),
                                         ],
                                       ),
@@ -475,12 +508,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Due Date',
                                     style: TextStyle(
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w500,
-                                      color: TempoTheme.textSecondary,
+                                      color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                                     ),
                                   ),
                                   const SizedBox(height: 5),
@@ -493,7 +526,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                         lastDate: DateTime.now().add(const Duration(days: 365)),
                                         builder: (context, child) {
                                           return Theme(
-                                            data: TempoTheme.darkTheme,
+                                            data: isDark ? TempoTheme.darkTheme : TempoTheme.lightTheme,
                                             child: child!,
                                           );
                                         },
@@ -508,12 +541,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                       decoration: BoxDecoration(
                                         color: _dueDate != null
                                             ? TempoTheme.pastelHoney.withValues(alpha: 0.12)
-                                            : Colors.white.withValues(alpha: 0.04),
+                                            : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03)),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: _dueDate != null
                                               ? TempoTheme.pastelHoney.withValues(alpha: 0.45)
-                                              : TempoTheme.glassBorder,
+                                              : (isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder),
                                           width: 0.8,
                                         ),
                                       ),
@@ -522,7 +555,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                           Icon(
                                             CupertinoIcons.flag,
                                             size: 13,
-                                            color: _dueDate != null ? TempoTheme.pastelHoney : TempoTheme.textMuted,
+                                            color: _dueDate != null
+                                                ? TempoTheme.pastelHoney
+                                                : (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted),
                                           ),
                                           const SizedBox(width: 5),
                                           Expanded(
@@ -531,7 +566,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                               style: TextStyle(
                                                 fontSize: 11.5,
                                                 fontWeight: _dueDate != null ? FontWeight.w600 : FontWeight.w400,
-                                                color: _dueDate != null ? TempoTheme.pastelHoney : TempoTheme.textMuted,
+                                                color: _dueDate != null
+                                                    ? TempoTheme.pastelHoney
+                                                    : (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted),
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -539,7 +576,11 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                           if (_dueDate != null)
                                             GestureDetector(
                                               onTap: () => setState(() => _dueDate = null),
-                                              child: const Icon(CupertinoIcons.xmark_circle_fill, size: 13, color: TempoTheme.textMuted),
+                                              child: Icon(
+                                                CupertinoIcons.xmark_circle_fill,
+                                                size: 13,
+                                                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                              ),
                                             ),
                                         ],
                                       ),
@@ -553,12 +594,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                         const SizedBox(height: 12),
 
                         // Column Horizon (Color-coded options!)
-                        const Text(
+                        Text(
                           'Column',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
-                            color: TempoTheme.textSecondary,
+                            color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -643,12 +684,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                         const SizedBox(height: 12),
 
                         // Attributes / Badges (Color-coded options!)
-                        const Text(
+                        Text(
                           'Attributes',
                           style: TextStyle(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
-                            color: TempoTheme.textSecondary,
+                            color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -807,12 +848,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                         // Subtasks Section
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'Subtasks',
                               style: TextStyle(
                                 fontSize: 11.5,
                                 fontWeight: FontWeight.w500,
-                                color: TempoTheme.textSecondary,
+                                color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -842,20 +883,34 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                               child: TextField(
                                 controller: _newSubtaskController,
                                 onSubmitted: (_) => _addSubtask(),
-                                style: const TextStyle(fontSize: 12.5, color: TempoTheme.textPrimary),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                                ),
                                 decoration: InputDecoration(
                                   hintText: 'Add a subtask...',
-                                  hintStyle: const TextStyle(color: TempoTheme.textMuted, fontSize: 12),
+                                  hintStyle: TextStyle(
+                                    color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                    fontSize: 12,
+                                  ),
                                   filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.04),
+                                  fillColor: isDark
+                                      ? Colors.white.withValues(alpha: 0.04)
+                                      : Colors.black.withValues(alpha: 0.03),
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6),
+                                    borderSide: BorderSide(
+                                      color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                                      width: 0.6,
+                                    ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.6),
+                                    borderSide: BorderSide(
+                                      color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                                      width: 0.6,
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(10),
@@ -899,9 +954,16 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                               margin: const EdgeInsets.only(bottom: 5),
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.03),
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.03)
+                                    : Colors.black.withValues(alpha: 0.03),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 0.6),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Colors.black.withValues(alpha: 0.06),
+                                  width: 0.6,
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -916,7 +978,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                           ? CupertinoIcons.checkmark_circle_fill
                                           : CupertinoIcons.circle,
                                       size: 15,
-                                      color: sub.isCompleted ? TempoTheme.pastelMint : TempoTheme.textMuted,
+                                      color: sub.isCompleted
+                                          ? TempoTheme.pastelMint
+                                          : (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted),
                                     ),
                                   ),
                                   const SizedBox(width: 7),
@@ -925,7 +989,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                       sub.title,
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: sub.isCompleted ? TempoTheme.textMuted : TempoTheme.textPrimary,
+                                        color: sub.isCompleted
+                                            ? (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted)
+                                            : (isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary),
                                         decoration: sub.isCompleted ? TextDecoration.lineThrough : null,
                                       ),
                                     ),
@@ -936,7 +1002,11 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                                         _subtasks.removeAt(idx);
                                       });
                                     },
-                                    child: const Icon(CupertinoIcons.xmark, size: 12, color: TempoTheme.textMuted),
+                                    child: Icon(
+                                      CupertinoIcons.xmark,
+                                      size: 12,
+                                      color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -949,7 +1019,10 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                 ),
 
                 const SizedBox(height: 12),
-                const Divider(color: TempoTheme.dividerDark, height: 1),
+                Divider(
+                  color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider,
+                  height: 1,
+                ),
                 const SizedBox(height: 12),
 
                 // Action Footer
@@ -961,7 +1034,13 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       ),
-                      child: const Text('Cancel', style: TextStyle(color: TempoTheme.textSecondary, fontSize: 13)),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(

@@ -113,6 +113,7 @@ class TaskItem {
   final DateTime? toDoDate; // Target / planned date to work on task
   final DateTime createdAt;
   final int order;
+  final bool isCompleted;
 
   const TaskItem({
     required this.id,
@@ -125,17 +126,31 @@ class TaskItem {
     this.toDoDate,
     required this.createdAt,
     this.order = 0,
+    this.isCompleted = false,
   });
 
   int get totalSubtasks => subtasks.length;
   int get completedSubtasks => subtasks.where((s) => s.isCompleted).length;
 
-  double get progress {
-    if (subtasks.isEmpty) return 0.0;
-    return completedSubtasks / totalSubtasks;
+  /// Returns 0.0 to 1.0 representing smooth task completion progress.
+  double get progressRatio {
+    if (subtasks.isEmpty) {
+      return isCompleted ? 1.0 : 0.0;
+    }
+    if (isCompleted) return 1.0;
+    return totalSubtasks > 0 ? (completedSubtasks / totalSubtasks) : 0.0;
   }
 
-  bool get isAllCompleted => subtasks.isNotEmpty && completedSubtasks == totalSubtasks;
+  double get progress => progressRatio;
+
+  bool get isTaskCompleted {
+    if (subtasks.isEmpty) {
+      return isCompleted;
+    }
+    return isCompleted || (subtasks.isNotEmpty && completedSubtasks == totalSubtasks);
+  }
+
+  bool get isAllCompleted => isTaskCompleted;
 
   bool get isOverdue {
     if (dueDate == null) return false;
@@ -173,6 +188,7 @@ class TaskItem {
     DateTime? toDoDate,
     DateTime? createdAt,
     int? order,
+    bool? isCompleted,
   }) {
     return TaskItem(
       id: id ?? this.id,
@@ -185,6 +201,7 @@ class TaskItem {
       toDoDate: toDoDate ?? this.toDoDate,
       createdAt: createdAt ?? this.createdAt,
       order: order ?? this.order,
+      isCompleted: isCompleted ?? this.isCompleted,
     );
   }
 }

@@ -127,11 +127,49 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     } catch (_) {}
   }
 
+  void _confirmClearData(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) {
+        return CupertinoAlertDialog(
+          title: const Text('Clear Test Data?'),
+          content: const Padding(
+            padding: EdgeInsets.only(top: 8.0),
+            child: Text(
+              'This will delete all current tasks and time blocks so your board is clean and production-ready. Columns and badge configurations will be preserved.',
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+            CupertinoDialogAction(
+              isDestructiveAction: true,
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                await ref.read(databaseProvider).clearAllUserTasksAndTimeBlocks();
+                if (mounted) {
+                  TempoToast.show(context, 'Workspace test data cleared. Ready for release!');
+                }
+              },
+              child: const Text('Clear Data'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentThemeMode = ref.watch(themeModeProvider);
     final customBg = ref.watch(customBackgroundProvider);
     final accentColor = ref.watch(customAccentColorProvider);
+    final animationsEnabled = ref.watch(animationsEnabledProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -438,6 +476,48 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         );
                       }).toList(),
                     ),
+                    const SizedBox(height: 12),
+                    Divider(color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider, height: 1),
+                    const SizedBox(height: 10),
+
+                    // Smooth Animations Toggle (Reduced Motion)
+                    Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Smooth Animations',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500,
+                                color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Enable fluid transitions, micro-animations, and timeline motion.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Transform.scale(
+                          scale: 0.8,
+                          child: CupertinoSwitch(
+                            value: animationsEnabled,
+                            activeTrackColor: accentColor,
+                            onChanged: (val) {
+                              HapticFeedback.selectionClick();
+                              ref.read(animationsEnabledProvider.notifier).toggle(val);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -651,6 +731,80 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                           ),
                         );
                       }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // ==========================================
+              // 4. DATA & WORKSPACE MANAGEMENT
+              // ==========================================
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Workspace Data & Production Reset',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Manage your local tasks and time blocks or clear test data.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              GlassContainer(
+                borderRadius: 14,
+                padding: const EdgeInsets.all(12),
+                backgroundColor: isDark
+                    ? TempoTheme.surfaceElevated.withValues(alpha: 0.85)
+                    : Colors.white.withValues(alpha: 0.90),
+                borderColor: Colors.transparent,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Clear All Tasks & Time Blocks',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Clears test tasks and time blocks to ensure a clean release state. Columns and badges remain intact.',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: () => _confirmClearData(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: TempoTheme.pastelRose,
+                        side: BorderSide(color: TempoTheme.pastelRose.withValues(alpha: 0.6), width: 0.9),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Clear Test Data', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ),

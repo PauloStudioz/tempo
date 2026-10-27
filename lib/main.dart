@@ -21,6 +21,7 @@ class TempoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(themeModeProvider);
+    final animationsEnabled = ref.watch(animationsEnabledProvider);
 
     return MaterialApp(
       title: 'TEMPO',
@@ -28,6 +29,12 @@ class TempoApp extends ConsumerWidget {
       theme: TempoTheme.lightTheme,
       darkTheme: TempoTheme.darkTheme,
       themeMode: themeMode,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: !animationsEnabled),
+          child: child!,
+        );
+      },
       home: const TempoMainScreen(),
     );
   }
@@ -42,20 +49,25 @@ class TempoMainScreen extends ConsumerStatefulWidget {
 
 class _TempoMainScreenState extends ConsumerState<TempoMainScreen> {
   int _selectedIndex = 0;
+  late final List<Widget> _pages;
 
   @override
-  Widget build(BuildContext context) {
-    final themeId = ref.watch(themePresetProvider);
-
-    final pages = [
+  void initState() {
+    super.initState();
+    _pages = [
       const BoardView(),
       const TimeBlockView(),
       CopilotView(onOpenSettings: () {
-        setState(() => _selectedIndex = 4);
+        if (mounted) setState(() => _selectedIndex = 4);
       }),
       const CustomizerView(),
       const SettingsView(),
     ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final themeId = ref.watch(themePresetProvider);
 
     return AdaptiveScaffold(
       selectedIndex: _selectedIndex,
@@ -66,7 +78,7 @@ class _TempoMainScreenState extends ConsumerState<TempoMainScreen> {
         TaskEditDialog.show(context);
       },
       backgroundThemeId: themeId,
-      pages: pages,
+      pages: _pages,
     );
   }
 }

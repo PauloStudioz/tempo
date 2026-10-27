@@ -112,11 +112,18 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GlassContainer(
       borderRadius: 18,
       padding: const EdgeInsets.all(14),
-      backgroundColor: TempoTheme.surfaceDark.withValues(alpha: 0.85),
-      borderColor: _isApplied ? TempoTheme.pastelMint.withValues(alpha: 0.5) : TempoTheme.glassBorder,
+      blur: 0,
+      backgroundColor: isDark
+          ? TempoTheme.surfaceDark.withValues(alpha: 0.85)
+          : Colors.white.withValues(alpha: 0.94),
+      borderColor: _isApplied
+          ? TempoTheme.pastelMint.withValues(alpha: 0.5)
+          : (isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -126,7 +133,7 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
               Container(
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(CupertinoIcons.sparkles, size: 13, color: TempoTheme.pastelSky),
@@ -138,26 +145,39 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
                   style: TextStyle(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
-                    color: _isApplied ? TempoTheme.pastelMint : TempoTheme.textPrimary,
+                    color: _isApplied
+                        ? TempoTheme.pastelMint
+                        : (isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary),
                   ),
                 ),
               ),
               if (!_isApplied)
                 GestureDetector(
                   onTap: widget.onDismiss,
-                  child: const Icon(CupertinoIcons.xmark, size: 13, color: TempoTheme.textMuted),
+                  child: Icon(
+                    CupertinoIcons.xmark,
+                    size: 13,
+                    color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(color: TempoTheme.dividerDark, height: 1),
+          Divider(
+            color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider,
+            height: 1,
+          ),
           const SizedBox(height: 10),
 
           // Proposed Tasks
           if (widget.proposal.tasks.isNotEmpty) ...[
             Text(
               'Tasks (${widget.proposal.tasks.length})',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+              ),
             ),
             const SizedBox(height: 6),
             ...widget.proposal.tasks.map((t) {
@@ -165,9 +185,12 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.02),
+                  color: isDark ? Colors.white.withValues(alpha: 0.02) : Colors.black.withValues(alpha: 0.02),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.04), width: 0.6),
+                  border: Border.all(
+                    color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.05),
+                    width: 0.6,
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,7 +202,11 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
                         Expanded(
                           child: Text(
                             t.title,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: TempoTheme.textPrimary),
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                            ),
                           ),
                         ),
                         if (t.dueDate != null)
@@ -208,7 +235,13 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
                                 const Icon(CupertinoIcons.circle, size: 9, color: TempoTheme.pastelSky),
                                 const SizedBox(width: 5),
                                 Expanded(
-                                  child: Text(s, style: const TextStyle(fontSize: 11, color: TempoTheme.textSecondary)),
+                                  child: Text(
+                                    s,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
@@ -225,7 +258,11 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
             const SizedBox(height: 6),
             Text(
               'Time Blocks (${widget.proposal.timeBlocks.length})',
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary),
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+              ),
             ),
             const SizedBox(height: 6),
             ...widget.proposal.timeBlocks.map((b) {
@@ -242,7 +279,14 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
                     const Icon(CupertinoIcons.clock, size: 12, color: TempoTheme.pastelSky),
                     const SizedBox(width: 6),
                     Expanded(
-                      child: Text(b.title, style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w500, color: TempoTheme.textPrimary)),
+                      child: Text(
+                        b.title,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                        ),
+                      ),
                     ),
                     Text(
                       DateFormatter.formatRange(b.startTime, b.endTime),
@@ -263,7 +307,13 @@ class _AIProposalCardState extends ConsumerState<AIProposalCard> {
               children: [
                 TextButton(
                   onPressed: widget.onDismiss,
-                  child: const Text('Dismiss', style: TextStyle(color: TempoTheme.textMuted, fontSize: 11.5)),
+                  child: Text(
+                    'Dismiss',
+                    style: TextStyle(
+                      color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                      fontSize: 11.5,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 6),
                 ElevatedButton(

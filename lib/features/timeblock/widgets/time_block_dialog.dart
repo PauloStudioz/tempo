@@ -122,12 +122,18 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GlassContainer(
       borderRadius: 20,
       padding: const EdgeInsets.all(18),
-      backgroundColor: TempoTheme.surfaceElevated.withValues(alpha: 0.96),
-      borderColor: TempoTheme.glassBorder,
+      blur: 16,
+      backgroundColor: isDark
+          ? TempoTheme.surfaceElevated.withValues(alpha: 0.96)
+          : Colors.white.withValues(alpha: 0.98),
+      borderColor: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,10 +142,10 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
             children: [
               Text(
                 widget.initialBlock == null ? 'Schedule Block' : 'Edit Block',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: TempoTheme.textPrimary,
+                  color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
                   letterSpacing: -0.2,
                 ),
               ),
@@ -147,31 +153,43 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: const Icon(CupertinoIcons.xmark, size: 16),
-                color: TempoTheme.textMuted,
+                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
               ),
             ],
           ),
           const SizedBox(height: 10),
-          const Divider(color: TempoTheme.dividerDark, height: 1),
+          Divider(color: isDark ? TempoTheme.dividerDark : TempoTheme.lightDivider, height: 1),
           const SizedBox(height: 14),
 
           // Title
           TextField(
             controller: _titleController,
-            style: const TextStyle(fontSize: 13.5, color: TempoTheme.textPrimary),
+            style: TextStyle(
+              fontSize: 13.5,
+              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'e.g., Focus Session: Literature Review [RSH]',
-              hintStyle: const TextStyle(color: TempoTheme.textMuted, fontSize: 12.5),
+              hintStyle: TextStyle(
+                color: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                fontSize: 12.5,
+              ),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.04),
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.7),
+                borderSide: BorderSide(
+                  color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                  width: 0.7,
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: TempoTheme.glassBorder, width: 0.7),
+                borderSide: BorderSide(
+                  color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                  width: 0.7,
+                ),
               ),
             ),
           ),
@@ -184,7 +202,14 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Start', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary)),
+                    Text(
+                      'Start',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     InkWell(
                       onTap: () async {
@@ -198,11 +223,20 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.04),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: TempoTheme.glassBorder, width: 0.6),
+                          border: Border.all(
+                            color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                            width: 0.6,
+                          ),
                         ),
-                        child: Text(_startTime.format(context), style: const TextStyle(color: TempoTheme.textPrimary, fontSize: 13)),
+                        child: Text(
+                          _startTime.format(context),
+                          style: TextStyle(
+                            color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -213,7 +247,14 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('End', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary)),
+                    Text(
+                      'End',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                      ),
+                    ),
                     const SizedBox(height: 5),
                     InkWell(
                       onTap: () async {
@@ -227,11 +268,20 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.04),
+                          color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black.withValues(alpha: 0.03),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: TempoTheme.glassBorder, width: 0.6),
+                          border: Border.all(
+                            color: isDark ? TempoTheme.glassBorder : TempoTheme.lightGlassBorder,
+                            width: 0.6,
+                          ),
                         ),
-                        child: Text(_endTime.format(context), style: const TextStyle(color: TempoTheme.textPrimary, fontSize: 13)),
+                        child: Text(
+                          _endTime.format(context),
+                          style: TextStyle(
+                            color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -242,7 +292,14 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
           const SizedBox(height: 14),
 
           // Pastel Color Swatches
-          const Text('Color', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: TempoTheme.textSecondary)),
+          Text(
+            'Color',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+            ),
+          ),
           const SizedBox(height: 7),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -274,7 +331,13 @@ class _TimeBlockDialogState extends ConsumerState<TimeBlockDialog> {
             children: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel', style: TextStyle(color: TempoTheme.textSecondary, fontSize: 13)),
+                child: Text(
+                  'Cancel',
+                  style: TextStyle(
+                    color: isDark ? TempoTheme.textSecondary : TempoTheme.lightTextSecondary,
+                    fontSize: 13,
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               ElevatedButton(

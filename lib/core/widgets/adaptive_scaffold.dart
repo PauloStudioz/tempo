@@ -77,14 +77,20 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
         backgroundColor: customBg.backgroundColor,
         body: Stack(
           children: [
-            // 1. Atmosphere Background Wallpaper (Custom Image or Custom Hex Color)
+            // 1. Atmosphere Background Wallpaper (Custom Image or Procedural Vector Gradient)
             Positioned.fill(
               child: customBg.imageBytes != null
-                  ? Image.memory(
-                      customBg.imageBytes!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
+                  ? ImageFiltered(
+                      imageFilter: customBg.blurSigma > 0
+                          ? ImageFilter.blur(sigmaX: customBg.blurSigma, sigmaY: customBg.blurSigma)
+                          : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                      child: Image.memory(
+                        customBg.imageBytes!,
+                        fit: BoxFit.cover,
+                        cacheWidth: 1920,
+                        width: double.infinity,
+                        height: double.infinity,
+                      ),
                     )
                   : Container(
                       decoration: BoxDecoration(
@@ -94,8 +100,8 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
                           colors: isDark
                               ? [
                                   customBg.backgroundColor,
-                                  customBg.backgroundColor.withValues(alpha: 0.85),
-                                  Color.alphaBlend(accentColor.withValues(alpha: 0.08), customBg.backgroundColor),
+                                  Color.alphaBlend(accentColor.withValues(alpha: 0.05), customBg.backgroundColor),
+                                  customBg.backgroundColor,
                                 ]
                               : [
                                   const Color(0xFFFBFBFC),
@@ -108,21 +114,13 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
                     ),
             ),
 
-            // Subtle scrim overlay
-            Positioned.fill(
-              child: Container(
-                color: isDark
-                    ? Colors.black.withValues(alpha: customBg.imageBytes != null ? 0.35 : 0.0)
-                    : Colors.white.withValues(alpha: customBg.imageBytes != null ? 0.25 : 0.0),
-              ),
-            ),
-
-            // Gaussian blur layer over background
-            if (customBg.blurSigma > 0)
+            // Subtle scrim overlay for custom image contrast
+            if (customBg.imageBytes != null)
               Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: customBg.blurSigma, sigmaY: customBg.blurSigma),
-                  child: const SizedBox.expand(),
+                child: Container(
+                  color: isDark
+                      ? Colors.black.withValues(alpha: 0.35)
+                      : Colors.white.withValues(alpha: 0.25),
                 ),
               ),
 
@@ -629,56 +627,65 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
 
         // Translucent Cupertino Bottom Navigation Bar
         Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
           child: GlassContainer(
             borderRadius: 22,
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             backgroundColor: isDark
                 ? TempoTheme.surfaceDark.withValues(alpha: customBg.surfaceTranslucency)
                 : Colors.white.withValues(alpha: (customBg.surfaceTranslucency * 0.90).clamp(0.15, 0.92)),
             borderColor: Colors.transparent,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildBottomNavItem(
-                  index: 0,
-                  icon: CupertinoIcons.square_grid_2x2,
-                  activeIcon: CupertinoIcons.square_grid_2x2_fill,
-                  label: 'Board',
-                  isDark: isDark,
-                  accentColor: accentColor,
+                Expanded(
+                  child: _buildBottomNavItem(
+                    index: 0,
+                    icon: CupertinoIcons.square_grid_2x2,
+                    activeIcon: CupertinoIcons.square_grid_2x2_fill,
+                    label: 'Board',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
                 ),
-                _buildBottomNavItem(
-                  index: 1,
-                  icon: CupertinoIcons.clock,
-                  activeIcon: CupertinoIcons.clock_fill,
-                  label: 'Time Block',
-                  isDark: isDark,
-                  accentColor: accentColor,
+                Expanded(
+                  child: _buildBottomNavItem(
+                    index: 1,
+                    icon: CupertinoIcons.clock,
+                    activeIcon: CupertinoIcons.clock_fill,
+                    label: 'Time Block',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
                 ),
-                _buildBottomNavItem(
-                  index: 2,
-                  icon: CupertinoIcons.sparkles,
-                  activeIcon: CupertinoIcons.sparkles,
-                  label: 'AI Assistant',
-                  isDark: isDark,
-                  accentColor: accentColor,
+                Expanded(
+                  child: _buildBottomNavItem(
+                    index: 2,
+                    icon: CupertinoIcons.sparkles,
+                    activeIcon: CupertinoIcons.sparkles,
+                    label: 'Copilot',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
                 ),
-                _buildBottomNavItem(
-                  index: 3,
-                  icon: CupertinoIcons.slider_horizontal_3,
-                  activeIcon: CupertinoIcons.slider_horizontal_3,
-                  label: 'Customize',
-                  isDark: isDark,
-                  accentColor: accentColor,
+                Expanded(
+                  child: _buildBottomNavItem(
+                    index: 3,
+                    icon: CupertinoIcons.slider_horizontal_3,
+                    activeIcon: CupertinoIcons.slider_horizontal_3,
+                    label: 'Customize',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
                 ),
-                _buildBottomNavItem(
-                  index: 4,
-                  icon: CupertinoIcons.gear,
-                  activeIcon: CupertinoIcons.gear_solid,
-                  label: 'Settings',
-                  isDark: isDark,
-                  accentColor: accentColor,
+                Expanded(
+                  child: _buildBottomNavItem(
+                    index: 4,
+                    icon: CupertinoIcons.gear,
+                    activeIcon: CupertinoIcons.gear_solid,
+                    label: 'Settings',
+                    isDark: isDark,
+                    accentColor: accentColor,
+                  ),
                 ),
               ],
             ),
@@ -706,7 +713,7 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
               ? (isDark
@@ -728,6 +735,8 @@ class _AdaptiveScaffoldState extends ConsumerState<AdaptiveScaffold> {
             const SizedBox(height: 2),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,

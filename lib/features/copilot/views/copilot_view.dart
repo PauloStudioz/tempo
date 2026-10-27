@@ -169,6 +169,9 @@ class _CopilotViewState extends ConsumerState<CopilotView> {
 
   @override
   void dispose() {
+    if (_isRecordingVoice) {
+      _audioRecorder.stop();
+    }
     _audioRecorder.dispose();
     _textController.dispose();
     _scrollController.dispose();
@@ -403,6 +406,9 @@ if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
 
     setState(() {
       _messages.add(userMessage);
+      if (_messages.length > 50) {
+        _messages.removeRange(0, _messages.length - 50);
+      }
       _isLoading = true;
       _textController.clear();
       _attachedImageBytes = null;
@@ -458,6 +464,9 @@ if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
       if (mounted) {
         setState(() {
           _messages.add(aiMessage);
+          if (_messages.length > 50) {
+            _messages.removeRange(0, _messages.length - 50);
+          }
           _isLoading = false;
         });
         _scrollToBottom();
@@ -473,6 +482,9 @@ if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
               text: 'Unable to connect to AI: $e\n\nPlease verify your Gemini API key in Settings.',
             ),
           );
+          if (_messages.length > 50) {
+            _messages.removeRange(0, _messages.length - 50);
+          }
           _isLoading = false;
         });
         _scrollToBottom();
@@ -560,7 +572,10 @@ if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
-                  return _buildMessageBubble(msg, isDark, accentColor);
+                  return KeyedSubtree(
+                    key: ValueKey(msg.id),
+                    child: _buildMessageBubble(msg, isDark, accentColor),
+                  );
                 },
               ),
             ),
@@ -918,6 +933,7 @@ if ([System.Windows.Forms.Clipboard]::ContainsImage()) {
             GlassContainer(
               borderRadius: 14,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              blur: 0, // High performance: eliminates GPU backdrop layer for chat bubbles
               backgroundColor: isDark ? TempoTheme.surfaceDark.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.85),
               borderColor: Colors.transparent,
               child: Text(

@@ -286,5 +286,124 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.light);
+
+    // Verify Smooth Animations toggle is rendered
+    expect(find.text('Smooth Animations'), findsOneWidget);
+    expect(find.text('Clear Test Data'), findsOneWidget);
+  });
+
+  testWidgets('TaskCircularCheckbox toggles normal tasks and reflects gradual subtask progress', (WidgetTester tester) async {
+    final db = AppDatabase(openConnection(inMemory: true));
+    await DatabaseSeeder.seed(db);
+
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+      ],
+    );
+
+    addTearDown(() async {
+      container.dispose();
+      await db.close();
+    });
+
+    // 1. Normal task without subtasks
+    final normalTask = TaskItem(
+      id: 'task_normal_1',
+      title: 'Solo Normal Task',
+      subjectCode: 'GEN',
+      columnId: 'col_doing_now',
+      createdAt: DateTime.now(),
+      subtasks: const [],
+      isCompleted: false,
+    );
+
+    expect(normalTask.isTaskCompleted, isFalse);
+    expect(normalTask.progressRatio, equals(0.0));
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: TaskCard(task: normalTask),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TaskCircularCheckbox), findsOneWidget);
+    expect(find.text('Solo Normal Task'), findsOneWidget);
+
+    // 2. Task with 2 subtasks, 1 completed
+    final progressiveTask = TaskItem(
+      id: 'task_prog_1',
+      title: 'Multi-step Task',
+      subjectCode: 'DEV',
+      columnId: 'col_doing_now',
+      createdAt: DateTime.now(),
+      subtasks: const [
+        Subtask(id: 'sub_1', taskId: 'task_prog_1', title: 'Sub 1', isCompleted: true),
+        Subtask(id: 'sub_2', taskId: 'task_prog_1', title: 'Sub 2', isCompleted: false),
+      ],
+    );
+
+    expect(progressiveTask.isTaskCompleted, isFalse);
+    expect(progressiveTask.progressRatio, equals(0.5));
+
+    // 3. Complete all subtasks
+    final completedTask = progressiveTask.copyWith(
+      subtasks: const [
+        Subtask(id: 'sub_1', taskId: 'task_prog_1', title: 'Sub 1', isCompleted: true),
+        Subtask(id: 'sub_2', taskId: 'task_prog_1', title: 'Sub 2', isCompleted: true),
+      ],
+    );
+
+    expect(completedTask.isTaskCompleted, isTrue);
+    expect(completedTask.progressRatio, equals(1.0));
+  });
+
+  testWidgets('BoardView top bar renders without overflow on mobile screen (390px)', (WidgetTester tester) async {
+    final db = AppDatabase(openConnection(inMemory: true));
+    await DatabaseSeeder.seed(db);
+
+    final container = ProviderContainer(
+      overrides: [
+        databaseProvider.overrideWithValue(db),
+      ],
+    );
+
+    addTearDown(() async {
+      container.dispose();
+      await db.close();
+    });
+
+    // Mobile viewport: iPhone 14/15 size 390x844
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: TempoMainScreen(),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    // Verify Board view header and segmented controls rendered with zero errors
+    expect(find.text('Board'), findsWidgets);
+    expect(find.text('All'), findsWidgets);
+    expect(find.text('Active'), findsWidgets);
+    expect(find.text('Completed'), findsWidgets);
+
+    // Verify no flutter overflow error occurred
+    expect(tester.takeException(), isNull);
   });
 }

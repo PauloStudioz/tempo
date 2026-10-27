@@ -28,6 +28,7 @@ class TaskCard extends ConsumerStatefulWidget {
 class _TaskCardState extends ConsumerState<TaskCard> {
   // Track recently toggled subtask id for fluid scale animation
   String? _animatingSubtaskId;
+  double _lastProgress = 0.0;
 
   @override
   Widget build(BuildContext context) {
@@ -43,17 +44,23 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
     final isOverdue = task.isOverdue;
     final progress = task.progress;
+    final animBegin = _lastProgress;
+    _lastProgress = progress;
     final translucency = ref.watch(customBackgroundProvider).surfaceTranslucency;
+    final accentColor = ref.watch(customAccentColorProvider);
+    final animationsEnabled = ref.watch(animationsEnabledProvider);
 
-    return GlassContainer(
-      borderRadius: 16,
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(18), // Increased whitespace & padding
-      backgroundColor: isDark
-          ? TempoTheme.surfaceElevated.withValues(alpha: (translucency * 1.15).clamp(0.15, 0.96))
-          : Colors.white.withValues(alpha: (translucency * 1.10).clamp(0.18, 0.94)),
-      borderColor: Colors.transparent, // Tonal elevation: No heavy 1px prison-cell borders
-      onTap: widget.onTap,
+    return RepaintBoundary(
+      child: GlassContainer(
+        borderRadius: 16,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(18), // Increased whitespace & padding
+        blur: 0, // High-performance: column provides glass backdrop, card uses crisp surface tint
+        backgroundColor: isDark
+            ? TempoTheme.surfaceElevated.withValues(alpha: (translucency * 1.15).clamp(0.15, 0.96))
+            : Colors.white.withValues(alpha: (translucency * 1.10).clamp(0.18, 0.94)),
+        borderColor: Colors.transparent, // Tonal elevation: No heavy 1px prison-cell borders
+        onTap: widget.onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -113,16 +120,41 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           ),
           const SizedBox(height: 10),
 
-          // 2. Body: Bold Readable Task Title
-          Text(
-            task.title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: -0.25,
-              color: isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary,
-              height: 1.35,
-            ),
+          // 2. Body: Circular Gradual Fill Checkbox + Bold Readable Task Title
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 1, right: 10),
+                child: TaskCircularCheckbox(
+                  progress: task.progressRatio,
+                  isCompleted: task.isTaskCompleted,
+                  accentColor: accentColor,
+                  isDark: isDark,
+                  animationsEnabled: animationsEnabled,
+                  onToggle: () async {
+                    final db = ref.read(databaseProvider);
+                    await db.toggleTaskCompleted(task.id, !task.isTaskCompleted);
+                  },
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  task.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.25,
+                    color: task.isTaskCompleted
+                        ? (isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted)
+                        : (isDark ? TempoTheme.textPrimary : TempoTheme.lightTextPrimary),
+                    decoration: task.isTaskCompleted ? TextDecoration.lineThrough : null,
+                    decorationColor: isDark ? TempoTheme.textMuted : TempoTheme.lightTextMuted,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
           ),
 
           // 3. Inline Subtasks Checklist with Smooth Fluid Micro-Animations
@@ -237,7 +269,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     Icon(
                       CupertinoIcons.calendar,
                       size: 11.5,
-                      color: isDark ? const Color(0xFF64D2FF) : const Color(0xFF007AFF),
+                      color: isDark ? TempoTheme.pastelSky : TempoTheme.systemBlue,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -245,7 +277,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                       style: TextStyle(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? const Color(0xFF64D2FF) : const Color(0xFF007AFF),
+                        color: isDark ? TempoTheme.pastelSky : TempoTheme.systemBlue,
                       ),
                     ),
                   ],
@@ -340,8 +372,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               child: SizedBox(
                 height: 3,
                 child: TweenAnimationBuilder<double>(
-                  tween: Tween<double>(begin: 0.0, end: progress),
-                  duration: const Duration(milliseconds: 350),
+                  tween: Tween<double>(begin: animBegin, end: progress),
+                  duration: animationsEnabled ? const Duration(milliseconds: 350) : Duration.zero,
                   curve: Curves.easeOutCubic,
                   builder: (context, value, _) {
                     return LinearProgressIndicator(
@@ -362,6 +394,156 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           ],
         ],
       ),
+    ),
+  );
+}
+}
+
+/// Circular Checkbox that smoothly gradually fills up as subtasks are completed,
+/// or directly toggles normal tasks with or without subtasks.
+class TaskCircularCheckbox extends StatelessWidget {
+  final double progress;
+  final bool isCompleted;
+  final Color accentColor;
+  final bool isDark;
+  final bool animationsEnabled;
+  final VoidCallback onToggle;
+
+  const TaskCircularCheckbox({
+    super.key,
+    required this.progress,
+    required this.isCompleted,
+    required this.accentColor,
+    required this.isDark,
+    required this.animationsEnabled,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveProgress = isCompleted ? 1.0 : progress.clamp(0.0, 1.0);
+    final isDone = effectiveProgress >= 0.999;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onToggle();
+        },
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: TweenAnimationBuilder<double>(
+            tween: Tween<double>(begin: 0.0, end: effectiveProgress),
+            duration: animationsEnabled ? const Duration(milliseconds: 280) : Duration.zero,
+            curve: Curves.easeOutCubic,
+            builder: (context, animVal, _) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  CustomPaint(
+                    size: const Size(20, 20),
+                    painter: _CircularCheckboxPainter(
+                      progress: animVal,
+                      accentColor: isDone ? TempoTheme.pastelMint : accentColor,
+                      isDark: isDark,
+                      isDone: isDone,
+                    ),
+                  ),
+                  if (animVal >= 0.95)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: animationsEnabled ? const Duration(milliseconds: 180) : Duration.zero,
+                      curve: Curves.elasticOut,
+                      builder: (context, scale, _) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: const Icon(
+                            CupertinoIcons.checkmark,
+                            size: 11,
+                            color: Colors.white,
+                          ),
+                        );
+                      },
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
     );
+  }
+}
+
+class _CircularCheckboxPainter extends CustomPainter {
+  final double progress;
+  final Color accentColor;
+  final bool isDark;
+  final bool isDone;
+
+  const _CircularCheckboxPainter({
+    required this.progress,
+    required this.accentColor,
+    required this.isDark,
+    required this.isDone,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 2.5) / 2;
+
+    // 1. Background Ring Track
+    final trackPaint = Paint()
+      ..color = isDark ? Colors.white.withValues(alpha: 0.20) : Colors.black.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    // 2. Full fill when completed (1.0)
+    if (isDone) {
+      final fillPaint = Paint()
+        ..color = accentColor
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, radius, fillPaint);
+      return;
+    }
+
+    // 3. Smooth progressive arc fill when 0 < progress < 1.0
+    if (progress > 0.01) {
+      final progressPaint = Paint()
+        ..color = accentColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+
+      // Start from 12 o'clock (-pi / 2) and sweep clockwise
+      const startAngle = -3.141592653589793 / 2;
+      final sweepAngle = 2 * 3.141592653589793 * progress;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        progressPaint,
+      );
+
+      // Subtle translucent inner fill corresponding to progress
+      final softFillPaint = Paint()
+        ..color = accentColor.withValues(alpha: (progress * 0.16).clamp(0.04, 0.20))
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(center, radius - 1, softFillPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _CircularCheckboxPainter oldDelegate) {
+    return oldDelegate.progress != progress ||
+        oldDelegate.accentColor != accentColor ||
+        oldDelegate.isDark != isDark ||
+        oldDelegate.isDone != isDone;
   }
 }
